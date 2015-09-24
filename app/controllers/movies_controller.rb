@@ -68,7 +68,6 @@ class MoviesController < ApplicationController
       @movies = @movies.where("rating in (?)", @ratings_filter_arr) #if params[:ratings]
  end
           
-  end
 
   def new
     # default: render 'new' template
