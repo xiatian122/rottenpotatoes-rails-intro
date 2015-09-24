@@ -13,22 +13,12 @@ class MoviesController < ApplicationController
 # All the requiremens are supposed to write in index
   def index
     #@movies = Movie.all
-    sort = params[:sort]
-    case sort
-    when 'title'
-      ordering,@title_header = {:order => :title}, 'hilite'
-    when 'release_date'
-      ordering,@date_header = {:order => :release_date}, 'hilite'
+    @order = params[order]
+    if (@order == "title")
+      @movies = Movie.order("LOWER(#{{@order}}")
+    elsif (@order == "release_date")
+      @movie = Movie.order("#{@order}")
     end
-
-    @all_movie_ratings = Movie.al_ratings
-    @select_ratings = params[:ratings] 
-
-    if @select_ratings == {}
-      @select_ratings = Hash[@all_movie_ratings.map { |rating| [rating, rating] }]
-    end
-
-    @movies = Movie.find_all_by_rating(@select_ratings.keys, ordering)
           
   end
 
