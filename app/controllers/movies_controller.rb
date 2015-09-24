@@ -13,12 +13,60 @@ class MoviesController < ApplicationController
 # All the requiremens are supposed to write in index
   def index
     #@movies = Movie.all
-    @order = params[order]
-    if (@order == "title")
-      @movies = Movie.order("LOWER(#{{@order}}")
-    elsif (@order == "release_date")
-      @movie = Movie.order("#{@order}")
+    @movies = Movie.scoped    # instead of all: in rails 3 all returns array.
+    @all_ratings = Movie.ALL_RATINGS
+    @ratings_filter_arr = Movie.ALL_RATINGS
+
+    params_updated = false;
+
+    logger.info params
+
+    #--------------------------------------------------------------
+    #Maintain ReSTful URL: move parameters from session to params if missing
+ 
+    tempparams = {}
+
+    raitingsUpdate = false
+    tempparams[:ratings] = params[:ratings]
+    if (params[:ratings] == nil)
+      tempparams[:ratings] = session[:ratings] 
+      raitingsUpdate = true
     end
+
+    orderUpdate = false
+    tempparams[:order] = params[:order] 
+    if (params[:order] == nil)
+      tempparams[:order] = session[:order] 
+      orderUpdate = true
+    end
+
+    if(orderUpdate || raitingsUpdate)
+      redirect_to movies_path(tempparams)  if ! tempparams
+    end
+    #--------------------------------------------------------------
+
+    if(params[:order])
+      session[:order] = params[:order]
+    end
+
+    params[:order] = session[:order]
+    @order = params[:order]
+    if(@order == "title")
+      @movies = Movie.order("LOWER(#{@order})")
+    elsif(@order == "release_date")
+      @movies = Movie.order("#{@order}")
+    end
+
+    #debugger
+    if(params[:ratings])
+      session[:ratings] = params[:ratings]
+    end
+
+      params[:ratings] = session[:ratings]
+      if(params[:ratings] != nil) 
+      @ratings_filter_arr = params[:ratings].keys
+      @movies = @movies.where("rating in (?)", @ratings_filter_arr) #if params[:ratings]
+ end
           
   end
 
