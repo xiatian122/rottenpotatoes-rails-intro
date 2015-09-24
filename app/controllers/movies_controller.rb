@@ -12,60 +12,50 @@ class MoviesController < ApplicationController
 
 # All the requiremens are supposed to write in index
   def index
-    @movies = Movie.scoped    # instead of all: in rails 3 all returns array.
-    @all_ratings = Movie.ALL_RATINGS
-    @ratings_filter_arr = Movie.ALL_RATINGS
+    @all_ratings = Movie.all_ratings
 
-    params_updated = false;
+    # Get the remembered settings
+    if (params[:filter] == nil and params[:ratings] == nil and params[:sort] == nil and 
+              (session[:filter] != nil or session[:ratings] != nil or session[:sort] != nil))
+      if (params[:filter] == nil and session[:filter] != nil)
+        params[:filter] = session[:filter]
+      end
+      if (params[:sort] == nil and session[:sort] != nil)
+        params[:sort] = session[:sort]
+      end
+      redirect_to movies_path(:filter => params[:filter], :sort => params[:sort], :ratings => params[:ratings]) 
+    else
 
-    logger.info params
-
-    #--------------------------------------------------------------
-    #Maintain ReSTful URL: move parameters from session to params if missing
- 
-    tempparams = {}
-
-    raitingsUpdate = false
-    tempparams[:ratings] = params[:ratings]
-    if (params[:ratings] == nil)
-      tempparams[:ratings] = session[:ratings] 
-      raitingsUpdate = true
-    end
-
-    orderUpdate = false
-    tempparams[:order] = params[:order] 
-    if (params[:order] == nil)
-      tempparams[:order] = session[:order] 
-      orderUpdate = true
-    end
-
-    if(orderUpdate || raitingsUpdate)
-      redirect_to movies_path(tempparams)  if ! tempparams
-    end
-    #--------------------------------------------------------------
-
-    if(params[:order])
-      session[:order] = params[:order]
-    end
-
-    params[:order] = session[:order]
-    @order = params[:order]
-    if(@order == "title")
-      @movies = Movie.order("LOWER(#{@order})")
-    elsif(@order == "release_date")
-      @movies = Movie.order("#{@order}")
-    end
-
-    #debugger
-    if(params[:ratings])
+      if (params[:filter] != nil and params[:filter] != "[]")
+        @filtered_ratings = params[:filter].scan(/[\w-]+/)
+        session[:filter] = params[:filter]
+      else
+        @filtered_ratings = params[:ratings] ? params[:ratings].keys : []
+        session[:filter] = params[:ratings] ? params[:ratings].keys.to_s : nil
+      end
+      
+      session[:sort] = params[:sort]
       session[:ratings] = params[:ratings]
+      if (params[:sort] == "title") # Sort by titles
+        if (params[:ratings] or params[:filter]) # filter ratings
+          @movies = Movie.find(:all, :conditions => {:rating => (@filtered_ratings==[] ? @all_ratings : @filtered_ratings)}, :order => "title")
+        else
+          @movies = Movie.find(:all, :order => "title")
+        end
+      elsif (params[:sort] == "release_date") # Sort by release_date
+        if (params[:ratings] or params[:filter]) # filter ratings
+          @movies = Movie.find(:all, :conditions => {:rating => (@filtered_ratings==[] ? @all_ratings : @filtered_ratings)}, :order => "release_date")
+        else
+          @movies = Movie.find(:all, :order => "release_date")
+        end
+      elsif (params[:sort] == nil)
+        if (params[:ratings] or params[:filter]) # filter ratings
+          @movies = Movie.find(:all, :conditions => {:rating => (@filtered_ratings==[] ? @all_ratings : @filtered_ratings)})
+        else
+          @movies = Movie.all
+        end
+      end
     end
-
-      params[:ratings] = session[:ratings]
-      if(params[:ratings] != nil) 
-      @ratings_filter_arr = params[:ratings].keys
-      @movies = @movies.where("rating in (?)", @ratings_filter_arr) #if params[:ratings]
- end
   end
           
 
