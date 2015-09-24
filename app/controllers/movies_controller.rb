@@ -12,7 +12,6 @@ class MoviesController < ApplicationController
 
 # All the requiremens are supposed to write in index
   def index
-    #@movies = Movie.all
     @movies = Movie.scoped    # instead of all: in rails 3 all returns array.
     @all_ratings = Movie.ALL_RATINGS
     @ratings_filter_arr = Movie.ALL_RATINGS
@@ -67,6 +66,7 @@ class MoviesController < ApplicationController
       @ratings_filter_arr = params[:ratings].keys
       @movies = @movies.where("rating in (?)", @ratings_filter_arr) #if params[:ratings]
  end
+  end
           
 
   def new
